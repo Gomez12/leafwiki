@@ -6,8 +6,8 @@ import (
 	"log"
 	"os"
 
-	"github.com/perber/wiki/internal/http"
-	"github.com/perber/wiki/internal/wiki"
+	"github.com/Gomez12/wiki/internal/http"
+	"github.com/Gomez12/wiki/internal/wiki"
 )
 
 func printUsage() {

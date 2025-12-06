@@ -3,7 +3,7 @@ package auth
 import (
 	"fmt"
 
-	"github.com/perber/wiki/internal/core/shared"
+	"github.com/Gomez12/wiki/internal/core/shared"
 	"golang.org/x/crypto/bcrypt"
 )
 

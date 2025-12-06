@@ -8,11 +8,11 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/perber/wiki/internal/core/assets"
-	"github.com/perber/wiki/internal/core/auth"
-	"github.com/perber/wiki/internal/core/shared/errors"
-	"github.com/perber/wiki/internal/core/tree"
-	"github.com/perber/wiki/internal/search"
+	"github.com/Gomez12/wiki/internal/core/assets"
+	"github.com/Gomez12/wiki/internal/core/auth"
+	"github.com/Gomez12/wiki/internal/core/shared/errors"
+	"github.com/Gomez12/wiki/internal/core/tree"
+	"github.com/Gomez12/wiki/internal/search"
 )
 
 type Wiki struct {

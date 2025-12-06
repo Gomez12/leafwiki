@@ -6,8 +6,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/perber/wiki/internal/core/tree"
-	"github.com/perber/wiki/internal/test_utils"
+	"github.com/Gomez12/wiki/internal/core/tree"
+	"github.com/Gomez12/wiki/internal/test_utils"
 )
 
 func TestSaveAndListAsset(t *testing.T) {

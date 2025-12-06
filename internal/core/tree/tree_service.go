@@ -6,7 +6,7 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/perber/wiki/internal/core/shared"
+	"github.com/Gomez12/wiki/internal/core/shared"
 )
 
 // TreeService is our main component for handling tree operations

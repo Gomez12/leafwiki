@@ -9,7 +9,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/perber/wiki/internal/wiki"
+	"github.com/Gomez12/wiki/internal/wiki"
 )
 
 func authenticatedRequest(t *testing.T, router http.Handler, method, url string, body *strings.Reader) *httptest.ResponseRecorder {

@@ -3,9 +3,9 @@ package wiki
 import (
 	"testing"
 
-	verrors "github.com/perber/wiki/internal/core/shared/errors"
-	"github.com/perber/wiki/internal/core/tree"
-	"github.com/perber/wiki/internal/test_utils"
+	verrors "github.com/Gomez12/wiki/internal/core/shared/errors"
+	"github.com/Gomez12/wiki/internal/core/tree"
+	"github.com/Gomez12/wiki/internal/test_utils"
 )
 
 func setupTestWiki(t *testing.T) *Wiki {

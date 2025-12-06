@@ -6,7 +6,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/perber/wiki/internal/core/tree"
+	"github.com/Gomez12/wiki/internal/core/tree"
 )
 
 func TestBuildAndRunIndexer_BasicIndexing(t *testing.T) {

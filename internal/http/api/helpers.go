@@ -5,9 +5,9 @@ import (
 	"net/http"
 	"strings"
 
+	verrors "github.com/Gomez12/wiki/internal/core/shared/errors"
+	"github.com/Gomez12/wiki/internal/core/tree"
 	"github.com/gin-gonic/gin"
-	verrors "github.com/perber/wiki/internal/core/shared/errors"
-	"github.com/perber/wiki/internal/core/tree"
 )
 
 func respondWithError(c *gin.Context, err error) {

@@ -8,7 +8,7 @@ import (
 	"path"
 	"sync"
 
-	"github.com/perber/wiki/internal/core/tree"
+	"github.com/Gomez12/wiki/internal/core/tree"
 )
 
 type AssetService struct {

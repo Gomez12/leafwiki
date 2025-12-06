@@ -5,7 +5,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/perber/wiki/internal/core/tree"
+	"github.com/Gomez12/wiki/internal/core/tree"
 )
 
 // BuildAndRunIndexer initializes the indexer with the given tree service and SQLite index,

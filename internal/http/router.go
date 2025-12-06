@@ -8,11 +8,11 @@ import (
 	"strings"
 	"time"
 
+	"github.com/Gomez12/wiki/internal/http/api"
+	"github.com/Gomez12/wiki/internal/http/middleware"
+	"github.com/Gomez12/wiki/internal/wiki"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
-	"github.com/perber/wiki/internal/http/api"
-	"github.com/perber/wiki/internal/http/middleware"
-	"github.com/perber/wiki/internal/wiki"
 )
 
 //go:embed dist/**

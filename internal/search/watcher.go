@@ -6,8 +6,8 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/Gomez12/wiki/internal/core/tree"
 	"github.com/fsnotify/fsnotify"
-	"github.com/perber/wiki/internal/core/tree"
 )
 
 type Watcher struct {
