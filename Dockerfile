@@ -14,7 +14,7 @@ RUN go mod download
 COPY . .
 COPY --from=frontend-build /app/dist ./internal/http/dist
 RUN CGO_ENABLED=0 go build \
-	-ldflags="-s -w -X github.com/perber/wiki/internal/http.EmbedFrontend=true -X github.com/perber/wiki/internal/http.EnableCors=false -X github.com/perber/wiki/internal/http.Environment=production" \
+	-ldflags="-s -w -X github.com/Gomez12/wiki/internal/http.EmbedFrontend=true -X github.com/Gomez12/wiki/internal/http.EnableCors=false -X github.com/Gomez12/wiki/internal/http.Environment=production" \
 	-o /out/leafwiki ./cmd/leafwiki/main.go
 
 # Step 3: Final image (small)
@@ -29,7 +29,7 @@ RUN mkdir -p /app/data && chmod 777 /app/data
 LABEL org.opencontainers.image.title="LeafWiki" \
       org.opencontainers.image.description="A lightweight, self-hosted wiki built in Go - tree-based, fast, and storing content in plain Markdown." \
       org.opencontainers.image.url="https://demo.leafwiki.com" \
-      org.opencontainers.image.source="https://github.com/perber/leafwiki" \
+      org.opencontainers.image.source="https://github.com/Gomez12/leafwiki" \
       org.opencontainers.image.licenses="MIT"
 
 ENTRYPOINT ["/app/leafwiki"]
