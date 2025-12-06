@@ -729,6 +729,10 @@
     @apply rounded-full!;
   }
 
+  .toolbar-button__autosave {
+    @apply rounded-full!;
+  }
+
   .toolbar-button__save-page {
     @apply bg-success! text-success-foreground! hover:bg-success/80! rounded-full!;
   }

@@ -1,5 +1,7 @@
 import Page404 from '@/components/Page404'
+import { Page } from '@/lib/api/pages'
 import { buildEditUrl } from '@/lib/urlUtil'
+import { useEditorStore } from '@/stores/editor'
 import { useTreeStore } from '@/stores/tree'
 import { useCallback, useEffect, useRef } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
@@ -12,6 +14,7 @@ import { useToolbarActions } from './useToolbarActions'
 
 export default function PageEditor() {
   const { '*': path } = useParams()
+  const AUTOSAVE_DELAY_MS = 500
 
   const navigate = useNavigate()
   const editorRef = useRef<MarkdownEditorRef>(null)
@@ -30,6 +33,12 @@ export default function PageEditor() {
       page.title !== title || page.slug !== slug || page.content !== content
     )
   })
+  const title = usePageEditorStore((s) => s.title)
+  const slug = usePageEditorStore((s) => s.slug)
+  const content = usePageEditorStore((s) => s.content)
+  const autosaveEnabled = useEditorStore((s) => s.autosaveEnabled)
+  const autosaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const ongoingSaveRef = useRef<Promise<Page | null | undefined> | null>(null)
 
   // Shows Unsaved Changes Dialog when navigating away with dirty state
   useNavigationGuard({
@@ -45,20 +54,52 @@ export default function PageEditor() {
     loadPageData(path)
   }, [path, loadPageData])
 
+  const saveAndUpdateUrl = useCallback(
+    async ({ silent = false }: { silent?: boolean } = {}) => {
+      if (ongoingSaveRef.current) {
+        await ongoingSaveRef.current
+      }
+
+      const pendingSave = (async () => {
+        try {
+          const savedPage = await savePage()
+          if (savedPage) {
+            window.history.replaceState(
+              null,
+              '',
+              buildEditUrl(`/${savedPage?.path}`),
+            )
+            if (!silent) {
+              toast.success('Page saved successfully')
+            }
+          }
+          return savedPage
+        } catch (err) {
+          toast.error(silent ? 'Autosave failed' : 'Error saving page')
+          return null
+        }
+      })()
+
+      ongoingSaveRef.current = pendingSave
+
+      try {
+        return await pendingSave
+      } finally {
+        ongoingSaveRef.current = null
+      }
+    },
+    [savePage],
+  )
+
   // callbacks to save / close
   const handleSave = useCallback(() => {
-    savePage()
-      .then(async (page) => {
-        // update URL the new path after save without reloading
-        if (page) {
-          window.history.replaceState(null, '', buildEditUrl(`/${page?.path}`))
-          toast.success('Page saved successfully')
-        }
-      })
-      .catch(() => {
-        toast.error('Error saving page')
-      })
-  }, [savePage])
+    // clear any pending autosave when saving manually
+    if (autosaveTimerRef.current) {
+      clearTimeout(autosaveTimerRef.current)
+      autosaveTimerRef.current = null
+    }
+    void saveAndUpdateUrl()
+  }, [saveAndUpdateUrl])
 
   const handleClose = useCallback(() => {
     if (page?.path) {
@@ -81,6 +122,37 @@ export default function PageEditor() {
     },
     [setContent],
   )
+
+  // Autosave after 2 seconds of inactivity when there are unsaved changes
+  useEffect(() => {
+    if (autosaveTimerRef.current) {
+      clearTimeout(autosaveTimerRef.current)
+      autosaveTimerRef.current = null
+    }
+
+    if (!autosaveEnabled || !dirty || !page) {
+      return
+    }
+
+    autosaveTimerRef.current = setTimeout(() => {
+      void saveAndUpdateUrl({ silent: true })
+    }, AUTOSAVE_DELAY_MS)
+
+    return () => {
+      if (autosaveTimerRef.current) {
+        clearTimeout(autosaveTimerRef.current)
+        autosaveTimerRef.current = null
+      }
+    }
+  }, [
+    autosaveEnabled,
+    dirty,
+    title,
+    slug,
+    content,
+    page,
+    saveAndUpdateUrl,
+  ])
 
   if (error) return <p className="page-editor__error">Error: {error}</p>
 

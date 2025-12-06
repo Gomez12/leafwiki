@@ -5,6 +5,8 @@ type EditorStore = {
   previewVisible: boolean
   setPreviewVisible: (visible: boolean) => void
   togglePreview: () => void
+  autosaveEnabled: boolean
+  setAutosaveEnabled: (enabled: boolean) => void
 }
 
 export const useEditorStore = create<EditorStore>()(
@@ -13,11 +15,14 @@ export const useEditorStore = create<EditorStore>()(
       previewVisible: true,
       setPreviewVisible: (visible) => set({ previewVisible: visible }),
       togglePreview: () => set({ previewVisible: !get().previewVisible }),
+      autosaveEnabled: true,
+      setAutosaveEnabled: (enabled) => set({ autosaveEnabled: enabled }),
     }),
     {
       name: 'leafwiki-editor-settings', // localStorage-Key
       partialize: (state) => ({
         previewVisible: state.previewVisible,
+        autosaveEnabled: state.autosaveEnabled,
       }),
     },
   ),

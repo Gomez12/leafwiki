@@ -1,10 +1,11 @@
 // Hook to provide toolbar actions for the page viewer
 
 import { useAppMode } from '@/lib/useAppMode'
+import { useEditorStore } from '@/stores/editor'
 import { useIsReadOnly } from '@/lib/useIsReadOnly'
 import { HotKeyDefinition, useHotKeysStore } from '@/stores/hotkeys'
-import { Save, X } from 'lucide-react'
-import { useEffect } from 'react'
+import { Save, Timer, TimerOff, X } from 'lucide-react'
+import { useCallback, useEffect } from 'react'
 import { useToolbarStore } from '../toolbar/toolbar'
 import { usePageEditorStore } from './pageEditor'
 
@@ -23,6 +24,8 @@ export function useToolbarActions({
   const readOnlyMode = useIsReadOnly()
   const registerHotkey = useHotKeysStore((s) => s.registerHotkey)
   const unregisterHotkey = useHotKeysStore((s) => s.unregisterHotkey)
+  const autosaveEnabled = useEditorStore((s) => s.autosaveEnabled)
+  const setAutosaveEnabled = useEditorStore((s) => s.setAutosaveEnabled)
 
   const dirty = usePageEditorStore((s) => {
     const { page, title, slug, content } = s
@@ -31,6 +34,11 @@ export function useToolbarActions({
       page.title !== title || page.slug !== slug || page.content !== content
     )
   })
+
+  const toggleAutosave = useCallback(
+    () => setAutosaveEnabled(!autosaveEnabled),
+    [autosaveEnabled, setAutosaveEnabled],
+  )
 
   // useEffect to set toolbar buttons
   useEffect(() => {
@@ -59,8 +67,30 @@ export function useToolbarActions({
         className: 'toolbar-button__save-page',
         action: savePage,
       },
+      {
+        id: 'toggle-autosave',
+        label: autosaveEnabled ? 'Autosave On' : 'Autosave Off',
+        hotkey: 'Click',
+        icon: autosaveEnabled ? (
+          <Timer size={18} />
+        ) : (
+          <TimerOff size={18} />
+        ),
+        variant: autosaveEnabled ? 'default' : 'outline',
+        className: 'toolbar-button__autosave',
+        action: toggleAutosave,
+      },
     ])
-  }, [appMode, readOnlyMode, setButtons, dirty, savePage, closePage])
+  }, [
+    appMode,
+    readOnlyMode,
+    setButtons,
+    dirty,
+    savePage,
+    closePage,
+    autosaveEnabled,
+    toggleAutosave,
+  ])
 
   // Register hotkeys
   useEffect(() => {
