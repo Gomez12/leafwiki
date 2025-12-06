@@ -60,7 +60,7 @@ func (s *SQLiteIndex) ensureSchema() error {
 		return err
 	}
 	// Create the users table if it doesn't exist
-	_, err = s.db.Exec(`
+	if _, err = s.db.Exec(`
 		CREATE VIRTUAL TABLE IF NOT EXISTS pages USING fts5(
 			path UNINDEXED,
 			filepath UNINDEXED,
@@ -68,8 +68,32 @@ func (s *SQLiteIndex) ensureSchema() error {
 			title,
 			content
 		);
-	`)
-	return err
+	`); err != nil {
+		return err
+	}
+
+	if _, err = s.db.Exec(`
+		CREATE TABLE IF NOT EXISTS file_history (
+			id INTEGER PRIMARY KEY AUTOINCREMENT,
+			path TEXT NOT NULL,
+			hash TEXT,
+			status TEXT NOT NULL,
+			previous_path TEXT,
+			recorded_at DATETIME DEFAULT CURRENT_TIMESTAMP
+		);
+	`); err != nil {
+		return err
+	}
+
+	if _, err = s.db.Exec(`CREATE INDEX IF NOT EXISTS idx_file_history_path ON file_history(path);`); err != nil {
+		return err
+	}
+
+	if _, err = s.db.Exec(`CREATE INDEX IF NOT EXISTS idx_file_history_hash ON file_history(hash);`); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (s *SQLiteIndex) Clear() error {

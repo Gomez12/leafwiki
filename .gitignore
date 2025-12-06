@@ -42,3 +42,4 @@ __debug*
 local
 
 ui.zip
+.cache/*

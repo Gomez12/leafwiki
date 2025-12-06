@@ -5,10 +5,13 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/Gomez12/wiki/internal/core/tree"
 	"github.com/fsnotify/fsnotify"
 )
+
+const historyScanInterval = 5 * time.Minute
 
 type Watcher struct {
 	DataDir     string
@@ -16,6 +19,8 @@ type Watcher struct {
 	Index       *SQLiteIndex
 	Status      *IndexingStatus
 	watcher     *fsnotify.Watcher
+	historyTick *time.Ticker
+	stopCh      chan struct{}
 }
 
 func NewWatcher(dataDir string, treeService *tree.TreeService, index *SQLiteIndex, status *IndexingStatus) (*Watcher, error) {
@@ -36,6 +41,9 @@ func (w *Watcher) Start() error {
 		return err
 	}
 
+	w.stopCh = make(chan struct{})
+	w.historyTick = time.NewTicker(historyScanInterval)
+
 	err = filepath.Walk(w.DataDir, func(p string, info os.FileInfo, err error) error {
 		if err != nil {
 			log.Printf("[watcher] walk error: %v", err)
@@ -49,8 +57,13 @@ func (w *Watcher) Start() error {
 		return nil
 	})
 	if err != nil {
+		w.historyTick.Stop()
+		close(w.stopCh)
+		_ = w.watcher.Close()
 		return err
 	}
+
+	go w.runHistoryRecorder()
 
 	go func() {
 		for {
@@ -142,7 +155,35 @@ func (w *Watcher) Start() error {
 	return nil
 }
 
+func (w *Watcher) runHistoryRecorder() {
+	if w.Index == nil || w.historyTick == nil {
+		return
+	}
+
+	// Run once immediately so we capture state at startup.
+	if err := w.Index.CaptureFileHistory(w.DataDir); err != nil {
+		log.Printf("[history] initial snapshot error: %v", err)
+	}
+
+	for {
+		select {
+		case <-w.historyTick.C:
+			if err := w.Index.CaptureFileHistory(w.DataDir); err != nil {
+				log.Printf("[history] snapshot error: %v", err)
+			}
+		case <-w.stopCh:
+			return
+		}
+	}
+}
+
 func (w *Watcher) Stop() error {
+	if w.historyTick != nil {
+		w.historyTick.Stop()
+	}
+	if w.stopCh != nil {
+		close(w.stopCh)
+	}
 	if w.watcher != nil {
 		return w.watcher.Close()
 	}
