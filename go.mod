@@ -1,4 +1,4 @@
-module github.com/perber/wiki
+module github.com/Gomez12/wiki
 
 go 1.24.0
 
