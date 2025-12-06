@@ -491,6 +491,71 @@ func (t *TreeService) EnsurePagePath(p string, targetTitle string) (*EnsurePathR
 	return nil, fmt.Errorf("could not ensure page path")
 }
 
+// AttachExistingPath ensures that the given route path exists in the tree, creating
+// missing nodes in-memory (without touching the filesystem). The last segment's title
+// is set to the provided title when given. This is useful for indexing files that
+// were added directly on disk without updating tree.json.
+func (t *TreeService) AttachExistingPath(routePath string, title string) (*PageNode, error) {
+	t.mu.Lock()
+	defer t.mu.Unlock()
+
+	if t.tree == nil {
+		return nil, ErrTreeNotLoaded
+	}
+
+	cleanRoute := strings.Trim(strings.TrimSpace(routePath), "/")
+	cleanRoute = strings.TrimSuffix(cleanRoute, "/index")
+	if cleanRoute == "" {
+		return nil, fmt.Errorf("route path must not be empty")
+	}
+
+	segments := strings.Split(cleanRoute, "/")
+	current := t.tree
+
+	for i, slug := range segments {
+		if slug == "" {
+			return nil, fmt.Errorf("invalid empty segment in route path")
+		}
+
+		var child *PageNode
+		for _, c := range current.Children {
+			if c.Slug == slug {
+				child = c
+				break
+			}
+		}
+
+		if child == nil {
+			id, err := shared.GenerateUniqueID()
+			if err != nil {
+				return nil, fmt.Errorf("could not generate unique ID: %w", err)
+			}
+			child = &PageNode{
+				ID:       id,
+				Title:    slug,
+				Slug:     slug,
+				Parent:   current,
+				Position: len(current.Children),
+				Children: []*PageNode{},
+			}
+			current.Children = append(current.Children, child)
+		}
+
+		// Set title for the last segment when provided
+		if i == len(segments)-1 && title != "" {
+			child.Title = title
+		}
+
+		current = child
+	}
+
+	if err := t.saveTreeLocked(); err != nil {
+		return nil, fmt.Errorf("could not save tree: %w", err)
+	}
+
+	return current, nil
+}
+
 // MovePage moves a page to another parent
 func (t *TreeService) MovePage(id string, parentID string) error {
 	t.mu.Lock()

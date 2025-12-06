@@ -1,6 +1,6 @@
 import { createBrowserRouter, Navigate, RouteObject } from 'react-router-dom'
 import LoginForm from '../auth/LoginForm'
-import PageEditor from '../editor/PageEditor'
+import PageEditor from '../editor/PageEditor.tsx'
 import RootRedirect from '../page/RootRedirect'
 import UserManagement from '../users/UserManagement'
 import PageViewer from '../viewer/PageViewer'

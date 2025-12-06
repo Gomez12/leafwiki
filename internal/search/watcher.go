@@ -159,16 +159,22 @@ func reindexFile(fullPath, dataDir string, treeService *tree.TreeService, index 
 	routePath := strings.TrimSuffix(rel, filepath.Ext(rel))
 	routePath = filepath.ToSlash(strings.TrimSuffix(routePath, "/index"))
 
-	page, err := treeService.FindPageByRoutePath(treeService.GetTree().Children, routePath)
-	if err != nil {
-		log.Printf("[watcher] not in tree: %s", rel)
-		return
-	}
-
 	content, err := os.ReadFile(fullPath)
 	if err != nil {
 		log.Printf("[watcher] read error: %v", err)
 		return
+	}
+
+	page, err := treeService.FindPageByRoutePath(treeService.GetTree().Children, routePath)
+	if err != nil {
+		// File exists on disk but not in tree: auto-attach and continue indexing.
+		node, ensureErr := ensureTreeNodeForFile(treeService, routePath, content)
+		if ensureErr != nil {
+			log.Printf("[watcher] auto-attach failed for %s: %v", rel, ensureErr)
+			return
+		}
+		log.Printf("[watcher] auto-attached missing path: %s", rel)
+		page = &tree.Page{PageNode: node, Content: string(content)}
 	}
 
 	err = index.IndexPage(page.CalculatePath(), rel, page.ID, page.Title, string(content))
