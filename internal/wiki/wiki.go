@@ -353,6 +353,22 @@ func (w *Wiki) GetPage(id string) (*tree.Page, error) {
 	return w.tree.GetPage(id)
 }
 
+// GetPageHistory returns the history entries for a page path and the hash of the current on-disk content.
+func (w *Wiki) GetPageHistory(route string) ([]search.FileHistoryEntry, string, error) {
+	page, err := w.FindByPath(route)
+	if err != nil {
+		return nil, "", err
+	}
+
+	entries, err := w.searchIndex.GetHistoryForPath(page.CalculatePath())
+	if err != nil {
+		return nil, "", err
+	}
+
+	currentHash := search.HashString(page.Content)
+	return entries, currentHash, nil
+}
+
 func (w *Wiki) FindByPath(route string) (*tree.Page, error) {
 	return w.tree.FindPageByRoutePath(w.tree.GetTree().Children, route)
 }

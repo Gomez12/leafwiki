@@ -2,10 +2,11 @@ import Page404 from '@/components/Page404'
 import {
   DIALOG_COPY_PAGE,
   DIALOG_DELETE_PAGE_CONFIRMATION,
+  DIALOG_PAGE_HISTORY,
 } from '@/lib/registries'
 import { useScrollRestoration } from '@/lib/useScrollRestoration'
 import { useDialogsStore } from '@/stores/dialogs'
-import { useCallback, useEffect } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import MarkdownPreview from '../preview/MarkdownPreview'
 import { useProgressbarStore } from '../progressbar/progressbar'
@@ -14,6 +15,7 @@ import { useScrollToHeadline } from './useScrollToHeadline'
 import { useSetPageTitle } from './useSetPageTitle'
 import { useToolbarActions } from './useToolbarActions'
 import { useViewerStore } from './viewer'
+import { getPageHistory, PageHistoryEntry } from '@/lib/api/pages'
 
 export default function PageViewer() {
   const { pathname } = useLocation()
@@ -23,6 +25,9 @@ export default function PageViewer() {
   const error = useViewerStore((s) => s.error)
   const page = useViewerStore((s) => s.page)
   const loadPageData = useViewerStore((s) => s.loadPageData)
+  const [historyEntries, setHistoryEntries] = useState<PageHistoryEntry[]>([])
+  const [historyHash, setHistoryHash] = useState('')
+  const [historyLoading, setHistoryLoading] = useState(false)
 
   const actions = {
     printPage: useCallback(() => {
@@ -44,15 +49,69 @@ export default function PageViewer() {
     }, [page, openDialog]),
   }
 
+  const openHistoryDialog = useCallback(() => {
+    if (!page) return
+    openDialog(DIALOG_PAGE_HISTORY, {
+      history: historyEntries,
+      currentHash: historyHash,
+      pageTitle: page.title,
+      pagePath: page.path,
+    })
+  }, [historyEntries, historyHash, openDialog, page])
+
   useScrollRestoration(pathname, loading)
   useScrollToHeadline({ content: page?.content || '', isLoading: loading })
-  useToolbarActions(actions)
   useSetPageTitle({ page })
 
   useEffect(() => {
     const path = pathname.slice(1) // remove leading /
     loadPageData?.(path)
   }, [pathname, loadPageData])
+
+  useEffect(() => {
+    if (!page?.path) {
+      setHistoryEntries([])
+      setHistoryHash('')
+      return
+    }
+
+    let isCancelled = false
+    setHistoryLoading(true)
+    ;(async () => {
+      try {
+        const data = await getPageHistory(page.path)
+        if (isCancelled) return
+        setHistoryEntries(data.history || [])
+        setHistoryHash(data.currentHash || '')
+      } catch (err) {
+        console.warn('Failed to load history', err)
+        if (isCancelled) return
+        setHistoryEntries([])
+        setHistoryHash('')
+      } finally {
+        if (!isCancelled) {
+          setHistoryLoading(false)
+        }
+      }
+    })()
+
+    return () => {
+      isCancelled = true
+    }
+  }, [page?.path])
+
+  const disableHistoryButton = useMemo(() => {
+    if (historyLoading) return true
+    return historyEntries.length <= 1
+  }, [historyEntries.length, historyLoading])
+
+  useToolbarActions({
+    ...actions,
+    viewHistory: {
+      action: openHistoryDialog,
+      disabled: disableHistoryButton,
+    },
+  })
 
   const renderError = () => {
     if (!loading && !page) {

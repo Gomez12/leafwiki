@@ -3,7 +3,7 @@
 import { useAppMode } from '@/lib/useAppMode'
 import { useIsReadOnly } from '@/lib/useIsReadOnly'
 import { HotKeyDefinition, useHotKeysStore } from '@/stores/hotkeys'
-import { Copy, Pencil, Printer, Trash2 } from 'lucide-react'
+import { Copy, History, Pencil, Printer, Trash2 } from 'lucide-react'
 import { useEffect } from 'react'
 import { useToolbarStore } from '../toolbar/toolbar'
 
@@ -12,6 +12,10 @@ export interface ToolbarActionsOptions {
   editPage: () => void
   deletePage: () => void
   copyPage: () => void
+  viewHistory?: {
+    action: () => void
+    disabled?: boolean
+  }
 }
 
 // Hook to set up toolbar actions based on app mode and read-only status
@@ -20,6 +24,7 @@ export function useToolbarActions({
   editPage,
   deletePage,
   copyPage,
+  viewHistory,
 }: ToolbarActionsOptions) {
   const setButtons = useToolbarStore((state) => state.setButtons)
   const appMode = useAppMode()
@@ -33,7 +38,20 @@ export function useToolbarActions({
       return
     }
 
-    setButtons([
+    const buttons = [
+      ...(viewHistory
+        ? [
+            {
+              id: 'view-history',
+              label: 'History',
+              hotkey: 'Ctrl+H',
+              icon: <History size={18} />,
+              variant: 'outline',
+              disabled: viewHistory.disabled,
+              action: viewHistory.action,
+            },
+          ]
+        : []),
       {
         id: 'delete-page',
         label: 'Delete Page',
@@ -65,9 +83,20 @@ export function useToolbarActions({
         icon: <Pencil size={18} />,
         action: editPage,
       },
-    ])
+    ]
+
+    setButtons(buttons)
 
     // Register hotkeys
+    const historyHotkey: HotKeyDefinition | null = viewHistory
+      ? {
+          keyCombo: 'Mod+h',
+          enabled: !viewHistory.disabled,
+          mode: ['view'],
+          action: viewHistory.action,
+        }
+      : null
+
     const copyHotkey: HotKeyDefinition = {
       keyCombo: 'Mod+Shift+S',
       enabled: true,
@@ -89,11 +118,13 @@ export function useToolbarActions({
       action: deletePage,
     }
 
+    if (historyHotkey) registerHotkey(historyHotkey)
     registerHotkey(editHotkey)
     registerHotkey(copyHotkey)
     registerHotkey(deleteHotkey)
 
     return () => {
+      if (historyHotkey) unregisterHotkey(historyHotkey.keyCombo)
       unregisterHotkey(editHotkey.keyCombo)
       unregisterHotkey(copyHotkey.keyCombo)
       unregisterHotkey(deleteHotkey.keyCombo)
@@ -108,5 +139,7 @@ export function useToolbarActions({
     printPage,
     registerHotkey,
     unregisterHotkey,
+    viewHistory?.action,
+    viewHistory?.disabled,
   ])
 }

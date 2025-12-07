@@ -21,6 +21,7 @@ type Watcher struct {
 	watcher     *fsnotify.Watcher
 	historyTick *time.Ticker
 	stopCh      chan struct{}
+	historyReq  chan struct{}
 }
 
 func NewWatcher(dataDir string, treeService *tree.TreeService, index *SQLiteIndex, status *IndexingStatus) (*Watcher, error) {
@@ -42,6 +43,7 @@ func (w *Watcher) Start() error {
 	}
 
 	w.stopCh = make(chan struct{})
+	w.historyReq = make(chan struct{}, 1)
 	w.historyTick = time.NewTicker(historyScanInterval)
 
 	err = filepath.Walk(w.DataDir, func(p string, info os.FileInfo, err error) error {
@@ -116,6 +118,7 @@ func (w *Watcher) Start() error {
 				switch {
 				case event.Op&(fsnotify.Create|fsnotify.Write) != 0:
 					reindexFile(eventPath, w.DataDir, w.TreeService, w.Index, w.Status)
+					w.requestHistorySnapshot()
 
 				case event.Op&fsnotify.Remove != 0:
 					relPath, err := filepath.Rel(w.DataDir, eventPath)
@@ -128,6 +131,7 @@ func (w *Watcher) Start() error {
 							log.Printf("[watcher] removed %d pages for: %s", cnt, relPath)
 						}
 					}
+					w.requestHistorySnapshot()
 
 				case event.Op&fsnotify.Rename != 0 && !isDir:
 					relPath, err := filepath.Rel(w.DataDir, eventPath)
@@ -140,6 +144,7 @@ func (w *Watcher) Start() error {
 							log.Printf("[watcher] removed %d pages for: %s", cnt, relPath)
 						}
 					}
+					w.requestHistorySnapshot()
 				}
 
 			case err, ok := <-w.watcher.Errors:
@@ -171,6 +176,10 @@ func (w *Watcher) runHistoryRecorder() {
 			if err := w.Index.CaptureFileHistory(w.DataDir); err != nil {
 				log.Printf("[history] snapshot error: %v", err)
 			}
+		case <-w.historyReq:
+			if err := w.Index.CaptureFileHistory(w.DataDir); err != nil {
+				log.Printf("[history] snapshot error: %v", err)
+			}
 		case <-w.stopCh:
 			return
 		}
@@ -184,10 +193,23 @@ func (w *Watcher) Stop() error {
 	if w.stopCh != nil {
 		close(w.stopCh)
 	}
+	if w.historyReq != nil {
+		close(w.historyReq)
+	}
 	if w.watcher != nil {
 		return w.watcher.Close()
 	}
 	return nil
+}
+
+func (w *Watcher) requestHistorySnapshot() {
+	if w.historyReq == nil {
+		return
+	}
+	select {
+	case w.historyReq <- struct{}{}:
+	default:
+	}
 }
 
 func reindexFile(fullPath, dataDir string, treeService *tree.TreeService, index *SQLiteIndex, status *IndexingStatus) {

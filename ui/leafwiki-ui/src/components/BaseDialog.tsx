@@ -22,6 +22,7 @@ export type BaseDialogProps = {
   dialogDescription: string
   dialogType: string
   defaultAction?: 'confirm' | 'cancel'
+  contentClassName?: string
   testidPrefix?: string
   onClose: () => boolean
   onConfirm: (type: string) => Promise<boolean>
@@ -72,6 +73,7 @@ export default function BaseDialog({
   onClose,
   onConfirm,
   defaultAction = 'confirm',
+  contentClassName,
   children,
   testidPrefix,
   cancelButton,
@@ -155,6 +157,7 @@ export default function BaseDialog({
       }}
     >
       <DialogContent
+        className={contentClassName}
         onEscapeKeyDown={(e: KeyboardEvent) => {
           // The dialog isn't responsible to handle key events!
           e.preventDefault()

@@ -77,11 +77,16 @@ func (s *SQLiteIndex) ensureSchema() error {
 			id INTEGER PRIMARY KEY AUTOINCREMENT,
 			path TEXT NOT NULL,
 			hash TEXT,
+			content TEXT,
 			status TEXT NOT NULL,
 			previous_path TEXT,
 			recorded_at DATETIME DEFAULT CURRENT_TIMESTAMP
 		);
 	`); err != nil {
+		return err
+	}
+
+	if err := s.ensureHistoryContentColumn(); err != nil {
 		return err
 	}
 
@@ -94,6 +99,38 @@ func (s *SQLiteIndex) ensureSchema() error {
 	}
 
 	return nil
+}
+
+func (s *SQLiteIndex) ensureHistoryContentColumn() error {
+	rows, err := s.db.Query(`PRAGMA table_info(file_history);`)
+	if err != nil {
+		return err
+	}
+	defer rows.Close()
+
+	hasContent := false
+	for rows.Next() {
+		var cid int
+		var name, ctype string
+		var notnull, pk int
+		var dflt interface{}
+		if err := rows.Scan(&cid, &name, &ctype, &notnull, &dflt, &pk); err != nil {
+			return err
+		}
+		if name == "content" {
+			hasContent = true
+		}
+	}
+	if rows.Err() != nil {
+		return rows.Err()
+	}
+
+	if hasContent {
+		return nil
+	}
+
+	_, err = s.db.Exec(`ALTER TABLE file_history ADD COLUMN content TEXT;`)
+	return err
 }
 
 func (s *SQLiteIndex) Clear() error {

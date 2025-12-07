@@ -17,6 +17,21 @@ export interface Page {
   content: string
 }
 
+export type PageHistoryEntry = {
+  id: number
+  path: string
+  hash: string
+  content: string
+  status: 'created' | 'modified' | 'deleted' | 'moved'
+  previousPath?: string | null
+  recordedAt: string
+}
+
+export type PageHistoryResponse = {
+  history: PageHistoryEntry[]
+  currentHash: string
+}
+
 export async function fetchTree(): Promise<PageNode> {
   return (await fetchWithAuth(`/api/tree`)) as PageNode
 }
@@ -47,6 +62,14 @@ export async function getPageByPath(path: string): Promise<Page> {
   } catch {
     throw new Error('Page not found')
   }
+}
+
+export async function getPageHistory(
+  path: string,
+): Promise<PageHistoryResponse> {
+  return (await fetchWithAuth(
+    `/api/pages/history?path=${encodeURIComponent(path)}`,
+  )) as PageHistoryResponse
 }
 
 export async function createPage({

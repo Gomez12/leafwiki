@@ -53,10 +53,54 @@ func TestCaptureFileHistoryLifecycle(t *testing.T) {
 	mustCapture(t, index, dataDir)
 	entries = readHistoryEntries(t, index)
 	assertHistory(t, entries[len(entries)-1], "docs/note.md", FileStatusDeleted, "")
+
+	history, err := index.GetHistoryForPath("docs/note.md")
+	if err != nil {
+		t.Fatalf("failed to read history via API: %v", err)
+	}
+	if len(history) != 4 {
+		t.Fatalf("expected 4 history rows, got %d", len(history))
+	}
+
+	gotStatuses := []FileHistoryStatus{
+		history[0].Status,
+		history[1].Status,
+		history[2].Status,
+		history[3].Status,
+	}
+	expectedStatuses := []FileHistoryStatus{
+		FileStatusDeleted,
+		FileStatusMoved,
+		FileStatusModified,
+		FileStatusCreated,
+	}
+
+	for i := range expectedStatuses {
+		if gotStatuses[i] != expectedStatuses[i] {
+			t.Fatalf("expected status %s at position %d, got %s", expectedStatuses[i], i, gotStatuses[i])
+		}
+	}
+
+	historyFromRoute, err := index.GetHistoryForPath("docs/note")
+	if err != nil {
+		t.Fatalf("failed to read history via route path: %v", err)
+	}
+	if len(historyFromRoute) != 4 {
+		t.Fatalf("expected 4 history rows via route path, got %d", len(historyFromRoute))
+	}
+
+	historyWithLeadingSlash, err := index.GetHistoryForPath("/docs/note")
+	if err != nil {
+		t.Fatalf("failed to read history via leading slash: %v", err)
+	}
+	if len(historyWithLeadingSlash) != 4 {
+		t.Fatalf("expected 4 history rows via leading slash, got %d", len(historyWithLeadingSlash))
+	}
 }
 
 type historyRow struct {
 	path         string
+	content      string
 	status       FileHistoryStatus
 	previousPath string
 }
@@ -64,7 +108,7 @@ type historyRow struct {
 func readHistoryEntries(t *testing.T, index *SQLiteIndex) []historyRow {
 	t.Helper()
 
-	rows, err := index.GetDB().Query(`SELECT path, status, COALESCE(previous_path, '') FROM file_history ORDER BY id;`)
+	rows, err := index.GetDB().Query(`SELECT path, content, status, COALESCE(previous_path, '') FROM file_history ORDER BY id;`)
 	if err != nil {
 		t.Fatalf("failed to read history: %v", err)
 	}
@@ -73,7 +117,7 @@ func readHistoryEntries(t *testing.T, index *SQLiteIndex) []historyRow {
 	var entries []historyRow
 	for rows.Next() {
 		var row historyRow
-		if err := rows.Scan(&row.path, &row.status, &row.previousPath); err != nil {
+		if err := rows.Scan(&row.path, &row.content, &row.status, &row.previousPath); err != nil {
 			t.Fatalf("failed to scan row: %v", err)
 		}
 		entries = append(entries, row)
@@ -106,5 +150,8 @@ func assertHistory(t *testing.T, row historyRow, expectedPath string, expectedSt
 	}
 	if row.previousPath != prev {
 		t.Fatalf("expected previous_path %s, got %s", prev, row.previousPath)
+	}
+	if row.content == "" {
+		t.Fatalf("expected content to be stored for %s", row.path)
 	}
 }
