@@ -1,6 +1,6 @@
-import Page404 from '@/components/Page404'
-import { Page } from '@/lib/api/pages'
-import { buildEditUrl } from '@/lib/urlUtil'
+import Page404 from '@/components/Page404.tsx'
+import { Page } from '@/lib/api/pages.ts'
+import { buildEditUrl } from '@/lib/urlUtil.ts'
 import { useEditorStore } from '@/stores/editor'
 import { useTreeStore } from '@/stores/tree'
 import { useCallback, useEffect, useRef } from 'react'
@@ -76,6 +76,7 @@ export default function PageEditor() {
           return savedPage
         } catch (err) {
           toast.error(silent ? 'Autosave failed' : 'Error saving page')
+          console.error(silent ? 'Autosave failed' : 'Error saving page', err)
           return null
         }
       })()
