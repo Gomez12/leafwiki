@@ -5,7 +5,7 @@ import { useIsReadOnly } from '@/lib/useIsReadOnly'
 import { HotKeyDefinition, useHotKeysStore } from '@/stores/hotkeys'
 import { Copy, History, Pencil, Printer, Trash2 } from 'lucide-react'
 import { useEffect } from 'react'
-import { useToolbarStore } from '../toolbar/toolbar'
+import { ToolbarButton, useToolbarStore } from '../toolbar/toolbar'
 
 export interface ToolbarActionsOptions {
   printPage: () => void
@@ -38,7 +38,7 @@ export function useToolbarActions({
       return
     }
 
-    const buttons = [
+    const buttons: ToolbarButton[] = [
       ...(viewHistory
         ? [
             {
