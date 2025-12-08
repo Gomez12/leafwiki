@@ -12,10 +12,10 @@ export interface ToolbarActionsOptions {
   editPage: () => void
   deletePage: () => void
   copyPage: () => void
-  viewHistory?: {
+  viewHistory: ({
     action: () => void
     disabled?: boolean
-  }
+  })
 }
 
 // Hook to set up toolbar actions based on app mode and read-only status
@@ -39,19 +39,15 @@ export function useToolbarActions({
     }
 
     const buttons: ToolbarButton[] = [
-      ...(viewHistory
-        ? [
-            {
-              id: 'view-history',
-              label: 'History',
-              hotkey: 'Ctrl+H',
-              icon: <History size={18} />,
-              variant: 'outline',
-              disabled: viewHistory.disabled,
-              action: viewHistory.action,
-            },
-          ]
-        : []),
+      {
+        id: 'view-history',
+        label: 'History',
+        hotkey: 'Ctrl+H',
+        icon: <History size={18} />,
+        variant: 'outline',
+        disabled: viewHistory.disabled,
+        action: viewHistory.action,
+      },
       {
         id: 'delete-page',
         label: 'Delete Page',
