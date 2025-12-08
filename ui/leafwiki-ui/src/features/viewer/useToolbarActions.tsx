@@ -139,6 +139,7 @@ export function useToolbarActions({
     printPage,
     registerHotkey,
     unregisterHotkey,
+    viewHistory,
     viewHistory?.action,
     viewHistory?.disabled,
   ])
