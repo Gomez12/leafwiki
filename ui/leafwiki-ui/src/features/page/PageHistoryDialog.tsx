@@ -66,14 +66,15 @@ export function PageHistoryDialog({
       cancelButton={{ label: 'Close', variant: 'outline', autoFocus: true }}
       buttons={[]}
     >
-      <div className="space-y-4 pt-2 max-h-[70vh] overflow-auto pr-1">
+      <div className="max-h-[70vh] space-y-4 overflow-auto pt-2 pr-1">
         {history.length === 0 && (
           <p className="text-sm text-slate-600">
             No history recorded for this page yet.
           </p>
         )}
         {history.map((entry) => {
-          const isCurrent = entry.hash === currentHash && entry.status !== 'deleted'
+          const isCurrent =
+            entry.hash === currentHash && entry.status !== 'deleted'
           return (
             <div
               key={entry.id}
@@ -117,8 +118,11 @@ export function PageHistoryDialog({
                   </code>
                 </div>
                 <div className="flex items-start gap-2 text-sm text-slate-700 dark:text-slate-200">
-                  <FileText size={14} className="mt-0.5 text-slate-400 dark:text-slate-500" />
-                  <pre className="max-h-64 w-full overflow-auto whitespace-pre-wrap rounded border border-slate-200 bg-slate-50 p-3 text-xs leading-relaxed dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100">
+                  <FileText
+                    size={14}
+                    className="mt-0.5 text-slate-400 dark:text-slate-500"
+                  />
+                  <pre className="max-h-64 w-full overflow-auto rounded border border-slate-200 bg-slate-50 p-3 text-xs leading-relaxed whitespace-pre-wrap dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100">
                     {entry.content || '—'}
                   </pre>
                 </div>

@@ -71,11 +71,7 @@ export function useToolbarActions({
         id: 'toggle-autosave',
         label: autosaveEnabled ? 'Autosave On' : 'Autosave Off',
         hotkey: 'Click',
-        icon: autosaveEnabled ? (
-          <Timer size={18} />
-        ) : (
-          <TimerOff size={18} />
-        ),
+        icon: autosaveEnabled ? <Timer size={18} /> : <TimerOff size={18} />,
         variant: autosaveEnabled ? 'default' : 'outline',
         className: 'toolbar-button__autosave',
         action: toggleAutosave,

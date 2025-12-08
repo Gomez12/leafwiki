@@ -145,15 +145,7 @@ export default function PageEditor() {
         autosaveTimerRef.current = null
       }
     }
-  }, [
-    autosaveEnabled,
-    dirty,
-    title,
-    slug,
-    content,
-    page,
-    saveAndUpdateUrl,
-  ])
+  }, [autosaveEnabled, dirty, title, slug, content, page, saveAndUpdateUrl])
 
   if (error) return <p className="page-editor__error">Error: {error}</p>
 
