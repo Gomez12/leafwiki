@@ -12,10 +12,10 @@ export interface ToolbarActionsOptions {
   editPage: () => void
   deletePage: () => void
   copyPage: () => void
-  viewHistory: ({
+  viewHistory: {
     action: () => void
     disabled?: boolean
-  })
+  }
 }
 
 // Hook to set up toolbar actions based on app mode and read-only status
